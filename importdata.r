@@ -18,3 +18,4 @@ usedDataset <- dataset[,usedVariables]
 #describe(usedDataset)
 summary(usedDataset)
 
+print(3)
