@@ -1,11 +1,5 @@
 #install.packages("pacman")
-install.packages()
 require(ggplot2)
-library()
-# For data visualization
-library(rpart.plot)
-# Contains the data
-library(ISLR)
 dataset <- read.csv(file = "Intel_CPUs.csv")
 #summary(dataset)
 #head(dataset)
