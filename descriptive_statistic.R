@@ -16,6 +16,7 @@ summary(data)
 # Plot Litho and Launched Date
 # Box-plotting
 data <- data[!is.na(data$litho), ]
+data
 data$litho <- as.factor(data$litho)
 ggplot(data, aes(x = ldate, y = litho)) +
   geom_boxplot(fill = "deepskyblue")
