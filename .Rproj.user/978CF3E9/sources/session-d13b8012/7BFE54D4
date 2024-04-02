@@ -16,11 +16,19 @@
         "scrollLine": "0"
     },
     "folds": "",
+<<<<<<< HEAD
     "lastKnownWriteTime": 1712031094,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
     "last_content_update": 1712031094993,
+=======
+    "lastKnownWriteTime": 1712031599,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1712031599,
+>>>>>>> 6777640
     "read_only": false,
     "read_only_alternatives": []
 }
