@@ -18,6 +18,7 @@ summary(data)
 data <- data[!is.na(data$litho), ]
 data
 data$litho <- as.factor(data$litho)
+data$litho
 ggplot(data, aes(x = ldate, y = litho)) +
   geom_boxplot(fill = "deepskyblue")
 
