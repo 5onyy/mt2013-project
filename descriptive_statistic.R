@@ -5,13 +5,45 @@ pacman::p_load(
   car,     # for levent and shapiro
   FSA,     # for Dunn test
 )
+# Load necessary packages
+library(grid)
+library(gridExtra)
 
 #  IMPORT THE DATA
 data <- import("Dataset/cpu_clean.csv")        # rio::import
+
 # ---------------------------------------------------------------------------
 # lets do some summary of the data first
-names(data)
-summary(data)
+# Generate summary statistics for the data frame
+# Generate summary statistics for the data frame
+summary_df <- summary(data)
+
+# Convert summary to character matrix
+summary_df <- as.matrix(summary_df)
+
+# Open PDF device
+pdf("Descriptive_statistics/summary_data_frame.pdf", width = 14, height = 4)
+
+# Add a title
+grid.text("Descriptive Statistics of Data", x = unit(0.5, "npc"), y = unit(0.9, "npc"), just = "center", gp = gpar(fontsize = 18, fontface = "bold"))
+
+# Create a grid table from the summary matrix with text centered
+grid_summary <- tableGrob(summary_df, theme = ttheme_default(
+  core = list(fg_params = list(hjust = 0.5))  # Center text horizontally
+))
+
+# Adjust the viewport
+pushViewport(viewport(x = 0.5, y = 0.5, width = 1, height = 1))
+
+# Draw the table onto the PDF
+grid.draw(grid_summary)
+
+# Reset viewport
+popViewport()
+
+# Close PDF device
+dev.off()
+
 # ---------------------------------------------------------------------------
 # Plot Litho and Launched Date
 # Box-plotting
