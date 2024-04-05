@@ -68,7 +68,7 @@ p1 <- ggplot(data, aes(x = ldate, y = litho)) +
 
 # Scatter plotting
 p2 <- ggplot(data, aes(x = ldate, y = litho)) +
-  geom_area(alpha = 0.5, fill = "skyblue") +
+  geom_area(alpha = 0.5, fill = "deepskyblue", lwd = 0.5, linetype = 3, color = 1) +
   #geom_smooth(method = lm, se = F, color = "red") +
   geom_point(color = "red", alpha = 0.5, size = 1) + 
   labs(title = "Lithography over time", 
