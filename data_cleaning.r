@@ -1,146 +1,174 @@
-attach(Intel_CPUs)
+# Installing packages
+library(car)
+library(caret)
+library(dplyr)
+library(drc)
+library(ggplot2)
+library(lessR)
+library(randomForest)
+library(readr)
+library(nlme)
+library(nls.multstart)
+library(pacman)
+library(readxl)
+library(tidyverse)
 
-# This shows the dimensions: num_row x num_col
-dim(Intel_CPUs)
+pacman::p_load(
+  rio,     # for dealing with basic import export
+  ggplot2, # for dealing with plot formats
+  zoo      # for dealing with year quarter format
+)
 
-# This show some basic info
-glimpse(Intel_CPUs)
+# Get file name
 
-# This list the names of columns / features
-names(Intel_CPUs)
+filename <- file.path("Dataset", "cpu_raw.csv")
 
-unique(Product_Collection) # 0 kha thi
+data <- import(filename)
+View(data)
 
-unique(Vertical_Segment) 
-# Mobile, Desktop, Embedded, Server
-# -> may change to factor
-# - Factor is used to work with categorical variables
-# variables that have fixed and known set of possible values
+########################################################
+data1 <- data[, c("Vertical_Segment", "Status", "Launch_Date", "Lithography",
+                 "Recommended_Customer_Price", "nb_of_Cores",
+                 "Processor_Base_Frequency", "TDP","T")] 
 
-unique(Processor_Number) # 0 kha thi
+View(data1)
 
-unique(Status) 
-# Launched, End of Life, End of Interactive Support, Announced
-# -> may change to factor
+names(data1) <- c("market", "status", "ldate", "litho", "rprice", "ncore", "bfreq", "tdp", "temp")
+names(data1)
 
-unique(Launch_Date) # ok, but has NA, 1 wrong format: "Q1 '15"
+View(data1)
+export(data1, "Dataset/cpu_choose_cols.csv")
+# ----------------------------------------------------------------------------------
+# Now cleaning the data
+names(data1)
+unique(data1$ldate) 
 
-unique(Lithography) # ok, but has NA, others in right format, unit: nanometer
+# Transform some wrong format in LDate to the right format
+# exist "Q1 '15"
+data1$ldate <- gsub("\\s*'(\\d{2})", "'\\1", data1$ldate)
+unique(data1$ldate)
 
-unique(Recommended_Customer_Price)
-# has "N/A"
-# some in wrong format such as "$123.00 - $123.00"
-# -> may treat this as take the mean of that range ??
-# right format should be: "$123.00"
+# Convert the string of characters to year quarters
+data1[,"ldate"] <- (as.yearqtr(data1[,"ldate"], format = "Q%q'%y"))
+unique(data1$ldate)
+# ----------------------------------------------------------------------------------
+# here we clean the data for the recommended price
+# for those price in the range of a and b, we take the mean of them
+# for those not, only convert the value
+unique(data1$rprice)
+data1$rprice <- ifelse(data1$rprice == "N/A", NA, data1$rprice)
 
-unique(nb_of_Cores)
-# ok, 22 values in the domain
-# 2  4  1  6  8 10 12 14 16 18 72 57 20 22 60 61 68 64 24 26 28 15
+# Function to convert price string to numeric
+convert_price <- function(price_str) {
+  # Check if the string is NA
+  if (is.na(price_str)) {
+    return(NA)
+  }
+  
+  # Remove "$" sign and commas ","
+  price_str <- gsub("\\$", "", price_str)
+  price_str <- gsub(",", "", price_str)
+  
+  # Check if the string contains a range
+  if (grepl("-", price_str)) {
+    # Extract numeric parts from the range
+    price_range <- as.numeric(unlist(strsplit(price_str, " - ")))
+    # Calculate the average of the range
+    price_numeric <- max(price_range, na.rm = TRUE)
+  } else {
+    # Extract numeric part from the string
+    price_numeric <- as.numeric(price_str)
+  }
+  return(price_numeric)
+}
 
-unique(nb_of_Threads)
-# ok, same as above
-# but has NA, other 19 values in the domain
+# Apply the function to the entire column
+data1$rprice <- sapply(data1$rprice, convert_price)
 
-unique(Processor_Base_Frequency)
-# hard to calculate but possible
-# - Has NA
-# - Some in unit of GHz, MHz
-# -> may choose MHz to be the common one to calculate
+View(data1)
+# ----------------------------------------------------------------------------------
+names(data1)
+unique(data1$litho)
 
-unique(Max_Turbo_Frequency)
-# All in GHz, Has NA
+data1[,"litho"] <- as.numeric(gsub(" nm", "", data1[,"litho"]))
+# ----------------------------------------------------------------------------------
+unique(data1$tdp)
 
-unique(Cache) # ko kha thi, do co 111 value khac nhau, do vi cung khac nhau
+data1[,"tdp"] <- as.numeric(gsub(" W", "", data1[,"tdp"]))
 
-unique(Bus_Speed) 
-# ko kha thi mac du chi co 35 values la vi co NA va
-# unit tui no cung khac nhau nhieu khong dong nhat duoc
+unique(data1$tdp)
+# ----------------------------------------------------------------------------------
+names(data1)
+unique(data1$bfreq)
 
-unique(TDP)
-# ko NA, all in right format of "<val> W"
+# Extract numeric part properly and convert to MHz for non-NA values
+non_na_indices <- !is.na(data1$bfreq)
+data1$bfreq[non_na_indices] <- 
+  ifelse(grepl("GHz", data1$bfreq[non_na_indices]),
+         as.numeric(sub("\\s*GHz", "", data1$bfreq[non_na_indices])),
+         as.numeric(sub("\\s*MHz", "", data1$bfreq[non_na_indices]))*0.001)
 
-unique(Embedded_Options_Available) # 0 kha thi: No, Yes, NA
+# Unit GHz
+data1$bfreq <- as.numeric(data1$bfreq)
+data1 <- data1[!is.na(data1$bfreq), ]
+unique(data1$bfreq)
 
-unique(Conflict_Free) # 0 kha thi: Yes, NA
+# ----------------------------------------------------------------------------------
+# Xu li data cua nhiet do
+# extract so lon nhat cua string
+names(data1)
 
-unique(Max_Memory_Size)
-# - Has NA
-# - Others has different unit, GB / TB, might be ok if NA not much
+unique(data1$temp)
 
-unique(Memory_Types) # 0 kha thi
+# Function to extract numeric values and find the maximum value
+get_max_numeric <- function(row) {
+  # Extract numeric values from the row and remove non-numeric characters
+  numeric_values <- str_extract_all(row, "-?\\d*\\.?\\d+")
+  
+  # Convert the extracted numeric values to numeric data type
+  numeric_values <- lapply(numeric_values, function(x) as.numeric(x))
+  
+  # Filter out NA values
+  numeric_values <- lapply(numeric_values, function(x) x[!is.na(x)])
+  
+  # If there are no numeric values, return NA
+  if (length(unlist(numeric_values)) == 0) {
+    return(NA)
+  }
+  
+  # Find the largest numeric value
+  max_value <- max(unlist(numeric_values))
+  
+  return(max_value)
+}
 
-unique(Max_nb_of_Memory_Channels)
-# might be ok
-# 2 4 1 NA 6 12 3 16
+# Apply the function to each row of the dataframe data3$T
+max_values <- sapply(data1$temp, get_max_numeric)
 
-unique(Max_Memory_Bandwidth)
-# might be ok
-# - Has NA, other in format "<value> GB/s"
+# Replace the "T" column with the maximum values
+data1$temp <- max_values
 
-unique(ECC_Memory_Supported) # 0 kha thi: yes, no, NA
+View(data1)
 
-unique(Processor_Graphics_) # 0 kha thi: NA
+names(data1)
 
-unique(Graphics_Base_Frequency)
-# - might be ok
-# - Has NA, others in unit: MHz / GHz
+summary(data1)
 
-unique(Graphics_Max_Dynamic_Frequency)
-# - Like above, might be ok
-# - has NA, others in unit: MHz / GHz
+xtabs(~status,data=data1)
+xtabs(~ldate,data=data1)
+xtabs(~litho,data=data1)
+xtabs(~rprice,data=data1)
+xtabs(~ncore,data=data1)
+xtabs(~bfreq,data=data1)
+xtabs(~tdp,data=data1)
+xtabs(~temp,data=data1)
 
-unique(Graphics_Video_Max_Memory)
-# - Might be ok
-# - Has NA, others in unit GB / MB
+data1 <- data1[!is.na(data1$tdp), ]
+data1 <- data1[!is.na(data1$litho), ]
+data1 <- data1[!is.na(data1$bfreq), ]
+data1 <- data1[!is.na(data1$ncore), ]
+data1 <- data1[!is.na(data1$temp), ]
 
-unique(Graphics_Output) # 0 kha thi, value ki quac : >
-
-unique(Support_4k) # 0 kha thi: NA
-
-unique(Max_Resolution_HDMI) # 0 kha thi
-unique(Max_Resolution_DP) # 0 kha thi
-unique(Max_Resolution_eDP_Integrated_Flat_Panel) # 0 kha thi
-unique(DirectX_Support) # 0 kha thi
-unique(OpenGL_Support) # 0 kha thi
-unique(PCI_Express_Revision) # 0 kha thi
-unique(PCI_Express_Configurations_) # cang kh kha thi :))
-
-unique(Max_nb_of_PCI_Express_Lanes) 
-# - maybe ok
-# 10 12 40  4 NA  1  6 16 24 20 28 44  2  8 32  0 48 36
-
-unique(T)
-# - quan trong nhung ma data format hoi ki
-# - Chu yeu unit la oC
-# - Has NA
-# - mot vai thg co format: "10C" (y la bi thieu o)
-# - "C1=69.2°C; D0=64.4°C"
-# - "90C (PGA); 105C (BGA)"
-# - "100C (BGA)"
-# - "90°C for rPGA,105°C for BGA" 
-# - "B3=62.2°C; G0=71°C"
-# - "L2=61.4°C, M0=73.3°C"
-# - "C1+D1=74°C; M0=72°C"
-# - "79.5°C - 94.5°C"
-# - mot vai thg 0 co unit
-
-# Khuc nay do minh lam dataset Intel nen hong ro nay co can kh
-unique(Intel_Hyper_Threading_Technology_) # 0 kha thi: yes no NA
-unique(Intel_Virtualization_Technology_VTx_) # 0 kha thi: nhu tren
-unique(Intel_64_) # yes no NA
-unique(Instruction_Set) 
-# not sure
-# "64-bit" "32-bit" NA "Itanium 64-bit"
-
-unique(Instruction_Set_Extensions) # 0 kha thi
-unique(Idle_States) # 0 kha thi: yes no na
-unique(Thermal_Monitoring_Technologies) # 0 kha thi: yes no na
-unique(Secure_Key) # 0 kha thi: yes no na
-unique(Execute_Disable_Bit) # 0 kha thi: yes no na 
-
-
-
-names(Intel_CPUs)
-
-
-
+export(data1, "Dataset/cpu_clean.csv")
+# Note hien tai in ra nhung chua remove duplicates
+# ----------------------------------------------------------------------------------
