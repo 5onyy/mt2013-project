@@ -1,3 +1,17 @@
+library(car)
+library(caret)
+library(dplyr)
+library(drc)
+library(ggplot2)
+library(lessR)
+library(randomForest)
+library(readr)
+library(nlme)
+library(nls.multstart)
+library(pacman)
+library(readxl)
+library(tidyverse)
+
 pacman::p_load(
   rio,            # for imports & exports
   ggplot2,        # for plots
