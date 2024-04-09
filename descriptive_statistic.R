@@ -68,7 +68,7 @@ p1 <- ggplot(data, aes(x = ldate, y = litho)) +
 
 # Scatter plotting
 p2 <- ggplot(data, aes(x = ldate, y = litho)) +
-  geom_area(alpha = 0.5, fill = "deepskyblue", lwd = 0.5, linetype = 3, color = 1) +
+  geom_area(alpha = 0.5, fill = "deepskyblue") +
   #geom_smooth(method = lm, se = F, color = "red") +
   geom_point(color = "red", alpha = 0.5, size = 1) + 
   labs(title = "Lithography over time", 
@@ -114,14 +114,38 @@ dev.off()
 
 #----------------------------------------------------------------------------------
 # Plotting ncore vs tdp (box-plotting and scatter-plotting)
-plot_data <- data
-plot_data$ncore <- as.factor(plot_data$ncore)
-ggplot(plot_data, aes(x = ncore, y = tdp)) + geom_boxplot(fill = "deepskyblue")
-ggplot(plot_data, aes(x = ncore, y = tdp)) +
-  geom_point(color = "deepskyblue")
+# Create the first plot (boxplot)
+plot1 <- ggplot(plot_data, aes(x = ncore, y = tdp)) +
+  geom_boxplot(fill = "deepskyblue") +
+  labs(title = "Boxplot of TDP for each Ncore",
+       x = "Ncore",
+       y = "TDP (Watts)") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
 
-# Base frequency is a bit random, but the trend of linearity is still evident
-ggplot(plot_data, aes(x = bfreq, y = tdp)) + geom_point(color = "deepskyblue")
+# Create the second plot (grouped bar plot)
+plot2 <- ggplot(plot_data, aes(x=ncore, y=tdp, fill=ncore)) +
+  geom_bar(position="dodge", stat="identity") +
+  labs(title = "Grouped Bar Plot of TDP for each Ncore",
+       x = "Ncore",
+       y = "TDP (Watts)") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.title = element_blank())
+
+# Open a PDF device
+pdf("Descriptive_statistics/TDP_Ncore.pdf", width = 14, height = 7)
+
+# Arrange the plots in two columns
+grid.arrange(plot1, plot2, ncol = 2)
+dev.off()
+
+# Create the stacked bar plot
+# ggplot(plot_data, aes(fill=ncore, y=tdp, x=ncore)) +
+#   geom_bar(position="stack", stat="identity") +
+#   labs(title = "Stacked Bar Plot of TDP for each Ncore", x = "Ncore", y = "Total TDP") +
+#   theme_minimal()
+
 
 # Lithography as tdp is less convincing; 
 # however, we see that recent lithography techniques 
@@ -130,9 +154,29 @@ plot_data$litho <- as.factor(plot_data$litho)
 ggplot(plot_data, aes(x = litho, y = tdp)) + geom_boxplot(fill = "deepskyblue")
 
 # Different trends: temp vs tdp
-ggplot(plot_data, aes(x = temp, y = tdp)) +
-  geom_point(color = "deepskyblue", ) +
-  geom_abline(mapping = aes(intercept= -50, slope = 1.2), color = "darkblue")
+p <- ggplot(plot_data, aes(x = temp, y = tdp)) +
+geom_point(color = "blue", size = 0.4, alpha = 0.7) +
+geom_abline(intercept= -50, slope = 1.2, color = "red") +
+labs(title = "TDP vs. Temperature",
+     x = "Temperature (°C)",
+     y = "TDP (Watts)") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Create a grob (graphical object) for the plot
+plot_grob <- ggplotGrob(p)
+
+# Create a text grob for the descriptive features
+text_grob <- textGrob("Descriptive features go here", gp=gpar(fontsize=10, col="black"))
+
+# Open a PDF device with the specified width and height ratio of 4:2
+pdf("Descriptive_statistics/TDP_temp.pdf", width=8, height=4)
+
+# Arrange the plot and text grob side by side with the specified ratio
+grid.arrange(plot_grob, text_grob, widths=c(4, 2))
+
+# Close the PDF device
+dev.off()
 
 #  tdp ~ temp and tdp ~ market : There are two different trends happening:
 # above the reference line is increasing trend, while below is decreasing trend. 
