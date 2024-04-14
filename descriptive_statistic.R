@@ -210,8 +210,8 @@ dev.off()
 # Different trends: temp vs tdp
 p <- ggplot(plot_data, aes(x = temp, y = tdp)) +
 geom_point(color = "blue", size = 0.4, alpha = 0.7) +
-geom_abline(intercept= -50, slope = 1.2, color = "red") +
-#geom_smooth(method = "gam") +
+#geom_abline(intercept= -50, slope = 1.2, color = "red") +
+geom_smooth(method = "gam") +
   labs(title = "TDP vs. Temperature",
      x = "Temperature (°C)",
      y = "TDP (Watts)") +
@@ -239,8 +239,9 @@ dev.off()
 # market segments type = (Desktop + Server) --> Computers
 #                        (Mobile + Embedded)--> Devices
 View(data)
-market_plot <- ggplot(data, aes(x = market, y = tdp, fill = market)) +
-  geom_bar(position="dodge", stat="identity") +
+market_plot <- ggplot(data, aes(x = tdp, fill = market)) +
+  #geom_bar(position="dodge", stat="identity") +
+  geom_density(alpha = 0.6) + 
   labs(title = "Bar plot for each market",
        x = "Market",
        y = "TDP (Watts)") +

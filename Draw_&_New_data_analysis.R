@@ -13,6 +13,8 @@ library(readxl)
 library(tidyverse)
 library(zoo)     # for year-quarter formats
 library(rio)     # for imports & exports
+library(grid)
+library(gridExtra)
 
 pacman::p_load(
   rio,            # for imports & exports
@@ -20,7 +22,7 @@ pacman::p_load(
   zoo             # for year-quarter formats
 )
 
-data <- import("cpu_clean.csv") # rio::impor
+data <- import("Dataset/cpu_clean.csv") # rio::impor
 
 summary(data)
 unique(data$litho)
@@ -96,6 +98,24 @@ retval <- retval[-1,]
 
 print(retval)
 
+retval <- as.matrix(retval)
+
+png("MLR/litho_confidence_interval.png", width = 11, height = 4, unit = "in", res = 300)
+
+grid.text("Summary of Confidence Interval of Lithography over the years", x = unit(0.5, "npc"), y = unit(0.9, "npc"), just = "center", gp = gpar(fontsize = 18, fontface = "bold"))
+# Create a grid table from the summary matrix with text centered
+grid_summary <- tableGrob(retval, theme = ttheme_default(
+  core = list(fg_params = list(hjust = 0.5))  # Center text horizontally
+))
+
+# Draw the table onto the PDF
+pushViewport(viewport(x = 0.5, y = 0.5, width = 1, height = 1))
+grid.draw(grid_summary)
+popViewport()
+
+# Close PDF device
+dev.off()
+
 ggplot(data, aes(x = ldate, y = litho)) + geom_boxplot(fill = "deepskyblue")
 
 # => Means are stable
@@ -142,7 +162,8 @@ ggplot(data, aes(x = temp, y = tdp)) + geom_point(color = "deepskyblue", ) + fac
 # - H1: there exist a pair of lithography type so that their mean is difference.
 
 litho_anova_model <- aov(tdp ~ litho, data = data)
-summary(litho_anova_model)
+pp <- summary(litho_anova_model)
+print(p)
 # => As pvalue < 0.05 --> reject the H0 --> exist a pair different mean
 
 # To satisfy the requirements of One-way ANOVA, 
@@ -151,13 +172,17 @@ summary(litho_anova_model)
 
 # visual-check: see if same distribution by see points fit line or not
 # --> fail
+
+#-----------------------------------------------------------------
 qqPlot(residuals(litho_anova_model))
 
 # test whether from same normal distribution --> fail
-shapiro.test(residuals(litho_anova_model)) 
+sp_test <- shapiro.test(residuals(litho_anova_model)) 
 
 # test for homogeneous variance --> fail
-leveneTest(tdp ~ litho, data = data) 
+lv_test <- leveneTest(tdp ~ litho, data = data) 
+
+#-------------------------------------------------------------------
 
 # => As fail, to make sure we will also be including the Kruskal - Wallis test 
 # as a non parametric alternative to the ANOVA test.
