@@ -15,10 +15,7 @@ data <- import("Dataset/cpu_clean.csv")        # rio::import
 
 #----------------------------------------------------------------------------
 #Function
-mode_calc <- function(x) {
-  ux <- unique(x)
-  ux[which.max(tabulate(match(x, ux)))]
-}
+
 
 # ---------------------------------------------------------------------------
 # lets do some summary of the data first
@@ -75,16 +72,16 @@ p2 <- ggplot(data, aes(x = ldate, y = litho)) +
        subtitle = "An area plot showing the change in lithography over time",
        x = "Launch Date", 
        y = "Lithography (nm)") +
-  theme_bw() +
+  theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face="bold", size=14),
         plot.subtitle = element_text(hjust = 0.5, face="italic", size=12),
         plot.caption = element_text(hjust = 1, face="italic", size=10),
         axis.title.x = element_text(face="bold", size=12),
         axis.title.y = element_text(face="bold", size=12))
 
-pdf("Descriptive_statistics/lito_and_ldate.pdf", width = 15, height = 6)
-grid.arrange(p1,p2,ncol = 2, widths = c(1,1))
-dev.off()
+# pdf("Descriptive_statistics/lito_and_ldate.pdf", width = 15, height = 6)
+# grid.arrange(p1,p2,ncol = 2, widths = c(1,1))
+# dev.off()
 png("Descriptive_statistics/lito_and_ldate.png", width = 15, height = 6, units = "in", res = 300)
 grid.arrange(p1,p2,ncol = 2, widths = c(1,1))
 dev.off()
@@ -106,15 +103,19 @@ p <- ggplot(data, aes(x = tdp)) +
   scale_y_continuous(breaks = seq(0, max(hist(data$tdp, plot=FALSE)$counts), by = 50))
 
 # Create the summary table
-summary_data <- c(summary(data$tdp), Mode = mode_calc(data$tdp))
+mode_calc <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
 
+summary_data <- c(summary(data$tdp), Mode = mode_calc(data$tdp))
 summary_df <- as.matrix(summary_data)
 summary_table <- tableGrob(summary_df)
 
 # Arrange the plot and the table on the same page
-pdf("Descriptive_statistics/TDP_summary.pdf", width = 10, height = 7)
-grid.arrange(p, summary_table, ncol = 2, widths = c(3, 2))
-dev.off()
+# pdf("Descriptive_statistics/TDP_summary.pdf", width = 10, height = 7)
+# grid.arrange(p, summary_table, ncol = 2, widths = c(3, 2))
+# dev.off()
 png("Descriptive_statistics/TDP_summary.png", width = 10, height = 7, unit = "in", res = 300)
 grid.arrange(p, summary_table, ncol = 2, widths = c(3, 2))
 dev.off()
@@ -123,7 +124,7 @@ dev.off()
 # Plotting ncore vs tdp (box-plotting and scatter-plotting)
 # Create the first plot (boxplot)
 plot1 <- ggplot(plot_data, aes(x = ncore, y = tdp)) +
-  geom_boxplot(fill = "deepskyblue") +
+  geom_boxplot(fill = "deepskyblue", outlier.shape = 8, outlier.size =2) +
   labs(title = "Boxplot of TDP for each Ncore",
        x = "Ncore",
        y = "TDP (Watts)") +
@@ -157,9 +158,9 @@ plot2 <- ggplot(filtered_data, aes(x=ncore, y=tdp, fill=ncore)) +
 print(plot2)
 
 
-pdf("Descriptive_statistics/TDP_Ncore.pdf", width = 14, height = 7)
-grid.arrange(plot1, plot2, ncol = 2)
-dev.off()
+# pdf("Descriptive_statistics/TDP_Ncore.pdf", width = 14, height = 7)
+# grid.arrange(plot1, plot2, ncol = 2)
+# dev.off()
 png("Descriptive_statistics/TDP_Ncore.png", width = 14, height = 7, res = 300, unit = "in")
 grid.arrange(plot1, plot2, ncol = 2)
 dev.off()
@@ -168,7 +169,8 @@ dev.off()
 # Lithography as tdp is less convincing; 
 # however, we see that recent lithography techniques 
 # tend to have stable base frequency
-# Convert litho to factor
+
+# Box plot for lithography and tdp
 # Convert litho to a factor
 plot_data$litho <- as.factor(plot_data$litho)
 # Create the base plot
@@ -184,9 +186,9 @@ p <- p + theme_bw() +
         axis.title.y = element_text(size = 12, face = "bold"),
         legend.position = "none")
 # Save the plot
-pdf("Descriptive_statistics/TDP_litho.pdf", width = 14, height = 7)
-print(p)
-dev.off()
+# pdf("Descriptive_statistics/TDP_litho.pdf", width = 14, height = 7)
+# print(p)
+# dev.off()
 png("Descriptive_statistics/TDP_litho.png", width = 14, height = 7, unit = "in", res = 300)
 print(p)
 dev.off()
@@ -209,9 +211,9 @@ plot_grob <- ggplotGrob(p)
 text_grob <- textGrob("Descriptive features go here", gp=gpar(fontsize=10, col="black"))
 
 # Open a PDF device with the specified width and height ratio of 4:2
-pdf("Descriptive_statistics/TDP_temp.pdf", width=8, height=4)
-grid.arrange(plot_grob, text_grob, widths=c(4, 2))
-dev.off()
+# pdf("Descriptive_statistics/TDP_temp.pdf", width=8, height=4)
+# grid.arrange(plot_grob, text_grob, widths=c(4, 2))
+# dev.off()
 png("Descriptive_statistics/TDP_temp.png", width=8, height=4, unit = "in", res = 300)
 grid.arrange(plot_grob, text_grob, widths=c(4, 2))
 dev.off()
@@ -223,14 +225,13 @@ dev.off()
 # market segments type = (Desktop + Server) --> Computers
 #                        (Mobile + Embedded)--> Devices
 View(data)
-View(unique(data$market))
 
+
+View(unique(data$market))
 # Counting occurrences of each market type
 market_counts <- table(data$market)
-
 # Displaying the counts
 print(market_counts)
-
 data1 <- data
 data1$type <- ifelse(data1$market == 'Server' | data1$market == 'Desktop', "Computers", "Devices")
 # This line creates a new column type in the data1 dataframe. The ifelse() function is used to assign values to this new column based on the values in the market column. If the market value is ‘Server’ or ‘Desktop’, ‘Computers’ is assigned to type. Otherwise, ‘Devices’ is assigned.
@@ -250,34 +251,31 @@ p <- ggplot(data1, aes(x = tdp, fill = type)) +
   theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
         axis.title.x = element_text(size = 12, face = "bold"),
         axis.title.y = element_text(size = 12, face = "bold"))
-ggsave("Descriptive_statistics/type_tdp_density.png", plot = p, width = 10, height = 7, dpi = 300)
-ggsave("Descriptive_statistics/type_tdp_density.pdf", plot = p, width = 10, height = 7)
+#ggsave("Descriptive_statistics/type_tdp_density.pdf", plot = p, width = 10, height = 7)
 # Print the plot
 
 #-------------------------------------------------------------------------#
 # Create the plot separate each type of cpu
-p <- ggplot(data1, aes(x = temp, y = tdp)) + 
+p1 <- ggplot(data1, aes(x = temp, y = tdp)) + 
   geom_point(aes(color = type), alpha = 0.6, size = 1) +
   scale_color_manual(values = c("Computers" = "deepskyblue", "Devices" = "firebrick3")) +
-  facet_wrap(~type, scales = "free") +
-  geom_smooth(se = TRUE, aes(color = type))
-
+  facet_wrap(~type, scales = "free") 
 # Add title and labels
-p <- p + labs(title = "Scatterplot of TDP by Temp for Each Type",
+p1 <- p1 + labs(title = "Scatterplot of TDP by Temp for Each Type",
               x = "Temp",
               y = "TDP",
               color = "Type")
-
 # Add theme
-p <- p + theme_bw() +
+p1 <- p1 + theme_bw() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
         axis.title.x = element_text(size = 12, face = "bold"),
         axis.title.y = element_text(size = 12, face = "bold"))
 
 # Print the plot
-print(p)
-ggsave("Descriptive_statistics/type_scatterplot.png", plot = p, width = 10, height = 6, dpi = 300)
-ggsave("Descriptive_statistics/type_scatterplot.pdf", plot = p, width = 10, height = 6)
+#ggsave("Descriptive_statistics/type_scatterplot.pdf", plot = p1, width = 10, height = 6)
+png("Descriptive_statistics/type.png", width = 15, height = 5, unit = "in", res = 300)
+grid.arrange(p, p1, ncol = 2)
+dev.off()
 # ---------------------------------------------------------------------------
 
 
