@@ -26,7 +26,7 @@ summary_df <- summary(df)
 summary_df <- as.matrix(summary_df)
 
 # Open PDF device
-pdf("Descriptive_statistics/summary_data_frame.pdf", width = 12, height = 4)
+png("Descriptive_statistics/summary_data_frame.png", width = 11, height = 4, unit = "in", res = 300)
 
 # Add a title
 grid.text("Descriptive Statistics of Data", x = unit(0.5, "npc"), y = unit(0.9, "npc"), just = "center", gp = gpar(fontsize = 18, fontface = "bold"))
@@ -192,13 +192,27 @@ p <- p + theme_bw() +
 png("Descriptive_statistics/TDP_litho.png", width = 14, height = 7, unit = "in", res = 300)
 print(p)
 dev.off()
+#-----------------------------------------------------------------------
+#Plotting TDP and Lithography
+p <- ggplot(plot_data, aes(x = bfreq, y = tdp)) +
+  geom_point(color = "firebrick", size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm") +
+  labs(title = "TDP vs. Bfreq",
+         x = "Bfreq (GHz)",
+         y = "TDP (Watts") +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))
+png("Descriptive_statistics/tdp_breq.png", width = 7, height = 6, unit = "in", res = 300)
+print(p)
+dev.off()
 
 #----------------------------------------------------------------------------
 # Different trends: temp vs tdp
 p <- ggplot(plot_data, aes(x = temp, y = tdp)) +
 geom_point(color = "blue", size = 0.4, alpha = 0.7) +
 geom_abline(intercept= -50, slope = 1.2, color = "red") +
-labs(title = "TDP vs. Temperature",
+#geom_smooth(method = "gam") +
+  labs(title = "TDP vs. Temperature",
      x = "Temperature (°C)",
      y = "TDP (Watts)") +
   theme_bw() +
@@ -215,7 +229,7 @@ text_grob <- textGrob("Descriptive features go here", gp=gpar(fontsize=10, col="
 # grid.arrange(plot_grob, text_grob, widths=c(4, 2))
 # dev.off()
 png("Descriptive_statistics/TDP_temp.png", width=8, height=4, unit = "in", res = 300)
-grid.arrange(plot_grob, text_grob, widths=c(4, 2))
+grid.arrange(plot_grob, ncol = 1)
 dev.off()
 
 #-------------------------------------------------------------------------
@@ -225,7 +239,17 @@ dev.off()
 # market segments type = (Desktop + Server) --> Computers
 #                        (Mobile + Embedded)--> Devices
 View(data)
-
+market_plot <- ggplot(data, aes(x = market, y = tdp, fill = market)) +
+  geom_bar(position="dodge", stat="identity") +
+  labs(title = "Bar plot for each market",
+       x = "Market",
+       y = "TDP (Watts)") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.title = element_blank())
+png("Descriptive_statistics/tdp_market.png", width = 5, height = 7, unit = "in", res = 300)
+print(market_plot)
+dev.off()
 
 View(unique(data$market))
 # Counting occurrences of each market type
