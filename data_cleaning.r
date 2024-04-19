@@ -22,8 +22,7 @@ pacman::p_load(
 )
 
 # Import data
-setwd("E:/2_LEARNING_BKU/2_File_2/K22_HK4/MT2013_XSTK/BTL/Code/BTL_XSTK_git/Dataset")
-data <- import("./cpu_raw.csv")       # rio::import
+data <- import("Dataset/cpu_raw.csv")       # rio::import
 data1 <- data[, c("Vertical_Segment", "Status", "Launch_Date", "Lithography",
                  "Recommended_Customer_Price", "nb_of_Cores",
                  "Processor_Base_Frequency", "TDP","T")] 
@@ -141,7 +140,23 @@ View(data1)
 
 names(data1)
 
-summary(data1)
+df <- data1[,3:ncol(data1)]
+df <- summary(df)
+summary_df <- as.matrix(df)
+# Open PDF device
+png("Data_Cleaning/before_drop_NAs.png", width = 11, height = 4, unit = "in", res = 300)
+# Add a title
+grid.text("Dataset after cleaning", x = unit(0.5, "npc"), y = unit(0.9, "npc"), just = "center", gp = gpar(fontsize = 18, fontface = "bold"))
+# Create a grid table from the summary matrix with text centered
+grid_summary <- tableGrob(summary_df, theme = ttheme_default(
+  core = list(fg_params = list(hjust = 0.5))  # Center text horizontally
+))
+# Draw the table onto the PDF
+pushViewport(viewport(x = 0.5, y = 0.5, width = 1, height = 1))
+grid.draw(grid_summary)
+popViewport()
+# Close PDF device
+dev.off()
 
 xtabs(~status,data=data1)
 xtabs(~ldate,data=data1)

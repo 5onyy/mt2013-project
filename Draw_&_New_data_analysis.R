@@ -15,6 +15,7 @@ library(zoo)     # for year-quarter formats
 library(rio)     # for imports & exports
 library(grid)
 library(gridExtra)
+library(magick)
 
 pacman::p_load(
   rio,            # for imports & exports
@@ -55,13 +56,6 @@ summary(data)
 # Assuming 'data' is your dataframe
 data2 <- data
 xtabs(~tdp,data=data)
-
-# Lithography as tdp is less convincing; 
-# however, we see that recent lithography techniques 
-# tend to have stable base frequency
-plot_data <- data
-plot_data$litho <- as.factor(plot_data$litho)
-ggplot(plot_data, aes(x = litho, y = tdp)) + geom_boxplot(fill = "deepskyblue")
 
 # ---------------------------------------------------------------------------
 # In this small section, we will demonstrate why Lithography 
@@ -174,7 +168,9 @@ print(p)
 # --> fail
 
 #-----------------------------------------------------------------
+png("MLR/qqplot_sptest_lvtest.png")
 qqPlot(residuals(litho_anova_model))
+dev.off()
 
 # test whether from same normal distribution --> fail
 sp_test <- shapiro.test(residuals(litho_anova_model)) 
@@ -201,7 +197,7 @@ kruskal.test(tdp ~ litho, data = data)
 # Dunn test for Kruskal Wallis
 Tukey <- TukeyHSD(litho_anova_model)
 plot(Tukey,las = 2)
-dunnTest(tdp ~ litho, data = data,method = "bonferroni")
+# dunnTest(tdp ~ litho, data = data,method = "bonferroni")
 # ---------------------------------------------------------------------------
 # REGRESSION ANALYSIS
 # ---------------------------------------------------------------------------
@@ -214,43 +210,81 @@ train_indices <- sample(1:nrow(data), nrow(data) * 0.8)
 train <- data[train_indices, ]
 test <- data[-train_indices, ]
 
+
 # Build the model
 model.lr <- lm(tdp ~ ncore + bfreq + temp , data = train)
 
-# Summary of the model
-summary(model.lr)
-
-# Testing for Residual Errors have a Mean Value of Zero
-ggplot(model.lr, aes(x = resid(model.lr))) + 
-  geom_histogram(binwidth = 2, fill = "deepskyblue")
-
+#----------------------------------------------------------------------------
+png("MLR/hist_residuals.png", width = 5, height = 7, unit = "in", res = 300)
+p <- ggplot(model.lr, aes(x = resid(model.lr))) + 
+  geom_histogram(binwidth = 2, fill = "darkorange") +
+  labs(
+    title = "Histogram of Residual Errors",
+    x = "Residual Errors",
+    y = "Frequency"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, color = "darkblue", size = 14, face = "bold.italic"),
+    axis.title.x = element_text(color = "blue", size = 12, face = "bold"),
+    axis.title.y = element_text(color = "blue", size = 12, face = "bold")
+  )
+print(p)
+dev.off()
+#---------------------------------------------------------------------------
 # We can check assumption:
 # Residual Errors have Constant Variance by using the Scale-Location plot.
-plot(model.lr, which = 3)
-
+png("MLR/scale_location.png")
+# Generate the plot
+plot(model.lr, which = 3,
+     col = "blue", pch = 20)
+# Add a horizontal line at y = 0
+abline(h = 0, col = "deepskyblue", lwd = 2)
+dev.off()
+#--------------------------------------------------------------------------
 # => equally spread out in a weird pattern
 # => residuals scatter is not following any formal distribution and is random
 
 # Testing for normality of the the errors:
 # test if the residuals is normally distributed, 
 # we plot the Q-Q plot using the command `plot()`.
-plot(model.lr, which = 2)
+png("MLR/qq_plot.png")
+# Generate the plot
+plot(model.lr, which = 2,
+     col = "firebrick", pch = 20)
+# Add a horizontal line at y = 0
+dev.off()
 
 # scatter plotting for the predicted value compared with the real value 
 # in test set. The plotted red line in graph is (d) y = x. 
 # The more concentration on this line the more correct the model does.
 
+#-------------------------------------------------------
+# Summary of the model
+ss <- summary(model.lr)
+print(ss)
+#-----------------------------------------------------
 # Create data frame for actual tdp value and predicted tdp value
+png("MLR/tdp_predicted.png", width = 5, height = 7, unit = "in", res = 300)
 comtab.lr <- test['tdp']
 comtab.lr['tdp_predicted'] <- as.data.frame(predict(model.lr, newdata = test))
 
-# Plotting
-# The majority of points lie near the line, so it is fine.
-ggplot(comtab.lr, aes(x = tdp, y = tdp_predicted)) + 
-  geom_point(shape=1, color="blue") + 
+p <- ggplot(comtab.lr, aes(x = tdp, y = tdp_predicted)) + 
+  geom_point(color="firebrick", alpha = 0.6) + 
   geom_abline(mapping=aes(intercept= 0, slope=1), color="darkblue") + 
-  labs(x = "TDP", y = "TDP Predicted")
-
+  labs(
+    title = "TDP vs Predicted TDP",
+    x = "TDP",
+    y = "TDP Predicted"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, color = "darkblue", size = 14, face = "bold.italic"),
+    axis.title.x = element_text(color = "blue", size = 12, face = "bold"),
+    axis.title.y = element_text(color = "blue", size = 12, face = "bold")
+  )
+print(p)
+dev.off()
 # ---------------------------------------------------------------------------
 # RANDOM FOREST REGRESSION MODEL
 # Build the model
