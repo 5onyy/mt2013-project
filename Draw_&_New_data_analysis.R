@@ -16,6 +16,7 @@ library(rio)     # for imports & exports
 library(grid)
 library(gridExtra)
 library(magick)
+library(performance)
 
 pacman::p_load(
   rio,            # for imports & exports
@@ -285,7 +286,42 @@ p <- ggplot(comtab.lr, aes(x = tdp, y = tdp_predicted)) +
   )
 print(p)
 dev.off()
+#------------------------------------------------------------------
+# VIF 
+
+model <- lm(tdp ~ ncore + bfreq + temp , data = train)
+# Installing and loading the 'car' library
+# install.packages("car")
+
+
+# Calculating VIF
+vif_values <- vif(model)
+vif_values
+# Visualizing VIF
+barplot(vif_values, col = "skyblue", main = "Variance Inflation Factor (VIF)")
+
+# Creating a correlation matrix
+cor_matrix <- cor(train[c("ncore", "bfreq", "temp")])
+
+# Visualizing the correlation matrix
+image(cor_matrix, main = "Correlation Matrix", col = colorRampPalette(c("blue", "white", "red"))(20))
+
+#perform Durbin-Watson test
+durbinWatsonTest(model)
+
 # ---------------------------------------------------------------------------
+#Calculating MAE, MSE, RMSE
+comtab.lr <- test['tdp']
+comtab.lr['tdp_predicted'] <- as.data.frame(predict(model.lr, newdata = test), row.names = NULL)
+print(paste("MSE: ", mean((comtab.lr$tdp - comtab.lr$tdp_predicted)^2)))
+print(paste("MAE: ", caret::MAE(comtab.lr$tdp, comtab.lr$tdp_predicted)))
+print(paste("RMSE: ", caret::RMSE(comtab.lr$tdp, comtab.lr$tdp_predicted)))
+
+#----------------------------------------------------------------------------
+#Performance
+
+
+#----------------------------------------------------------------------------
 # RANDOM FOREST REGRESSION MODEL
 # Build the model
 summary(data)
@@ -302,6 +338,7 @@ comtab.rfr['tdp_predicted'] <- as.data.frame(predict(model.rfr, newdata = test),
 # Evaluate model performance
 accuracy <- sum(1-abs(comtab.rfr$tdp_predicted - comtab.rfr$tdp) / comtab.rfr$tdp) / nrow(comtab.rfr)
 MAE <- sum(abs(comtab.rfr$tdp_predicted - comtab.rfr$tdp)) / nrow(comtab.rfr)
+
 
 print(paste("Accuracy:", accuracy))
 print(paste("MAE:", MAE))
@@ -322,4 +359,5 @@ ggplot(comtab.rfr, aes(x = tdp, y = tdp_predicted)) +
   geom_point(shape=1, color="blue") +
   geom_abline(mapping=aes(intercept= 0, slope=1),color="darkblue") + 
   labs(x = "TDP", y = "TDP Predicted")
+
 
