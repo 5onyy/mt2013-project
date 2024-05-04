@@ -218,15 +218,11 @@ png("Descriptive_statistics/tdp_breq.png", width = 7, height = 6, unit = "in", r
 print(p)
 dev.off()
 
+# TEMP VS TDP
 #----------------------------------------------------------------------------
-# Temp VS Tdp
-#----------------------------------------------------------------------------
-# Different trends:
-# -----------------
 p <- ggplot(plot_data, aes(x = temp, y = tdp)) +
 geom_point(color = "blue", size = 0.4, alpha = 0.7) +
-#geom_abline(intercept= -50, slope = 1.2, color = "red") +
-geom_smooth(method = "gam") +
+geom_abline(intercept= -50, slope = 1.2, color = "red") +
   labs(title = "TDP vs. Temperature",
      x = "Temperature (°C)",
      y = "TDP (Watts)") +
@@ -236,25 +232,12 @@ geom_smooth(method = "gam") +
 # Create a grob (graphical object) for the plot
 plot_grob <- ggplotGrob(p)
 
-# Create a text grob for the descriptive features
-text_grob <- textGrob("Descriptive features go here", gp=gpar(fontsize=10, col="black"))
-
-# Open a PDF device with the specified width and height ratio of 4:2
-# pdf("Descriptive_statistics/TDP_temp.pdf", width=8, height=4)
-# grid.arrange(plot_grob, text_grob, widths=c(4, 2))
-# dev.off()
 png("Descriptive_statistics/TDP_temp.png", width=8, height=4, unit = "in", res = 300)
 grid.arrange(plot_grob, ncol = 1)
 dev.off()
 
-#----------------------------------------------------------------------------
-# tdp VS temp AND tdp VS market
-#----------------------------------------------------------------------------
-# There are two different trends happening:
-# - Above the reference line is increasing trend, while below is decreasing trend. 
-# - In fact, we have a feeling that these two trends come from different 
-# market segments type = (Desktop + Server) --> Computers
-#                        (Mobile + Embedded)--> Devices
+
+# TDP v.s. TEMP AND TDP v.s. MARKET
 #----------------------------------------------------------------------------
 View(data)
 market_plot <- ggplot(data, aes(x = tdp, fill = market)) +
@@ -281,7 +264,7 @@ data1$type <- ifelse(data1$market == 'Server' | data1$market == 'Desktop', "Comp
 View(data1)
 data1$type <- as.factor(data1$type)
 
-#----------------------------------------------------------------------------------
+
 # Create the DENSITY PLOT of TDP for EACH TYPE
 #----------------------------------------------------------------------------------
 p <- ggplot(data1, aes(x = tdp, fill = type)) + 
@@ -295,11 +278,9 @@ p <- ggplot(data1, aes(x = tdp, fill = type)) +
   theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
         axis.title.x = element_text(size = 12, face = "bold"),
         axis.title.y = element_text(size = 12, face = "bold"))
-#ggsave("Descriptive_statistics/type_tdp_density.pdf", plot = p, width = 10, height = 7)
-# Print the plot
 
-#-------------------------------------------------------------------------
-# PLOT SEPERATE each type of cpu
+
+# PLOT SEPERATE TYPES OF CPU
 #-------------------------------------------------------------------------
 p1 <- ggplot(data1, aes(x = temp, y = tdp)) + 
   geom_point(aes(color = type), alpha = 0.6, size = 1) +
@@ -310,15 +291,15 @@ p1 <- p1 + labs(title = "Scatterplot of TDP by Temp for Each Type",
               x = "Temp",
               y = "TDP",
               color = "Type")
-# Add theme
+
 p1 <- p1 + theme_bw() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
         axis.title.x = element_text(size = 12, face = "bold"),
         axis.title.y = element_text(size = 12, face = "bold"))
 
-# Print the plot
-#ggsave("Descriptive_statistics/type_scatterplot.pdf", plot = p1, width = 10, height = 6)
 png("Descriptive_statistics/type.png", width = 15, height = 5, unit = "in", res = 300)
 grid.arrange(p, p1, ncol = 2)
 dev.off()
-# ---------------------------------------------------------------------------
+
+
+

@@ -19,7 +19,6 @@ library(rio)     # for imports & exports
 library(grid)
 library(gridExtra)
 library(magick)
-library(performance)
 
 pacman::p_load(
   rio,            # for imports & exports
@@ -326,46 +325,4 @@ print(paste("MAE: ", caret::MAE(comtab.lr$tdp, comtab.lr$tdp_predicted)))
 print(paste("RMSE: ", caret::RMSE(comtab.lr$tdp, comtab.lr$tdp_predicted)))
 
 #----------------------------------------------------------------------------
-#Performance
-
-
-#----------------------------------------------------------------------------
-# RANDOM FOREST REGRESSION MODEL
-# Build the model
-summary(data)
-
-model.rfr <- randomForest(formula = tdp ~ bfreq + ncore + temp, data = train, ntree = 500)
-
-# Print the model
-print(model.rfr)
-
-# Create data frame for real tdp value and predicted tdp value
-comtab.rfr <- test['tdp']
-comtab.rfr['tdp_predicted'] <- as.data.frame(predict(model.rfr, newdata = test), row.names = NULL)
-
-# Evaluate model performance
-accuracy <- sum(1-abs(comtab.rfr$tdp_predicted - comtab.rfr$tdp) / comtab.rfr$tdp) / nrow(comtab.rfr)
-MAE <- sum(abs(comtab.rfr$tdp_predicted - comtab.rfr$tdp)) / nrow(comtab.rfr)
-
-
-print(paste("Accuracy:", accuracy))
-print(paste("MAE:", MAE))
-
-# Calculate R-squared on testing data
-r2_test <- cor(comtab.rfr$tdp, comtab.rfr$tdp_predicted)^2
-print(r2_test)
-
-# Calculate the residuals by subtracting the actual values from the predicted values
-residuals <- comtab.rfr$tdp - comtab.rfr$tdp_predicted
-
-# Create a normal probability plot of the residuals
-qqnorm(residuals)
-qqline(residuals)
-
-# Plotting the predicted - actual
-ggplot(comtab.rfr, aes(x = tdp, y = tdp_predicted)) + 
-  geom_point(shape=1, color="blue") +
-  geom_abline(mapping=aes(intercept= 0, slope=1),color="darkblue") + 
-  labs(x = "TDP", y = "TDP Predicted")
-
 
