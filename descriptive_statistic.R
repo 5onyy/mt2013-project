@@ -1,3 +1,6 @@
+# ----------------------------------------------------------------------------------
+#                              LOADING PACKAGES                                    #
+# ----------------------------------------------------------------------------------
 pacman::p_load(
   rio,     # for imports & exports
   ggplot2, # for plots
@@ -5,6 +8,7 @@ pacman::p_load(
   car,     # for levent and shapiro
   FSA,     # for Dunn test
 )
+
 # Load necessary packages
 library(grid)
 library(gridExtra)
@@ -13,11 +17,7 @@ library(tidyverse)
 #  IMPORT THE DATA
 data <- import("Dataset/cpu_clean.csv")        # rio::import
 
-#----------------------------------------------------------------------------
-#Function
-
-
-# ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
 # lets do some summary of the data first
 df <- data[,3:ncol(data)]
 # Generate summary statistics for the data frame
@@ -25,15 +25,18 @@ summary_df <- summary(df)
 # Convert summary to character matrix
 summary_df <- as.matrix(summary_df)
 
+# ----------------------------------------------------------------------------------
 # Open PDF device
 png("Descriptive_statistics/summary_data_frame.png", width = 11, height = 4, unit = "in", res = 300)
 
 # Add a title
 grid.text("Descriptive Statistics of Data", x = unit(0.5, "npc"), y = unit(0.9, "npc"), just = "center", gp = gpar(fontsize = 18, fontface = "bold"))
+
 # Create a grid table from the summary matrix with text centered
 grid_summary <- tableGrob(summary_df, theme = ttheme_default(
   core = list(fg_params = list(hjust = 0.5))  # Center text horizontally
 ))
+
 # Draw the table onto the PDF
 pushViewport(viewport(x = 0.5, y = 0.5, width = 1, height = 1))
 grid.draw(grid_summary)
@@ -41,14 +44,15 @@ popViewport()
 
 # Close PDF device
 dev.off()
-
-# ---------------------------------------------------------------------------
-# Plot Litho and Launched Date
+# ----------------------------------------------------------------------------------
+#                                  PLOTTING                                        #
+# ----------------------------------------------------------------------------------
+# Plot Litho VS Launched Date
+# ----------------------------------------------------------------------------------
 # Box-plotting
+# ------------
 data <- data[!is.na(data$litho), ]
 data$litho <- as.factor(data$litho)
-
-
 
 p1 <- ggplot(data, aes(x = ldate, y = litho)) +
   geom_boxplot(fill = "deepskyblue", color = "black", outlier.shape = 8, outlier.size = 2) +
@@ -63,7 +67,9 @@ p1 <- ggplot(data, aes(x = ldate, y = litho)) +
         axis.title.x = element_text(face="bold", size=12),
         axis.title.y = element_text(face="bold", size=12))
 
+# -----------------
 # Scatter plotting
+# -----------------
 p2 <- ggplot(data, aes(x = ldate, y = litho)) +
   geom_area(alpha = 0.5, fill = "deepskyblue") +
   #geom_smooth(method = lm, se = F, color = "red") +
@@ -86,11 +92,9 @@ png("Descriptive_statistics/lito_and_ldate.png", width = 15, height = 6, units =
 grid.arrange(p1,p2,ncol = 2, widths = c(1,1))
 dev.off()
 
-# By drawing out the LDate and Litho, we can see that
-# Ldate increase and Litho decrease --> so we use Ltho instead of Ldata
-
 #---------------------------------------------------------------------------------
-# Now drawing the histogram of TDP
+# HISTOGRAM of TDP
+#---------------------------------------------------------------------------------
 p <- ggplot(data, aes(x = tdp)) +
   geom_histogram(binwidth = 5, fill = "orange") +
   xlab("TDP (W)") +
@@ -121,8 +125,10 @@ grid.arrange(p, summary_table, ncol = 2, widths = c(3, 2))
 dev.off()
 
 #----------------------------------------------------------------------------------
-# Plotting ncore vs tdp (box-plotting and scatter-plotting)
+# Plotting ncore VS tdp (box-plotting and scatter-plotting)
+#----------------------------------------------------------------------------------
 # Create the first plot (boxplot)
+# -------------------------------
 plot1 <- ggplot(plot_data, aes(x = ncore, y = tdp)) +
   geom_boxplot(fill = "deepskyblue", outlier.shape = 8, outlier.size =2) +
   labs(title = "Boxplot of TDP for each Ncore",
@@ -131,7 +137,9 @@ plot1 <- ggplot(plot_data, aes(x = ncore, y = tdp)) +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5))
 
+# -----------------------------------------
 # Create the second plot (grouped bar plot)
+# -----------------------------------------
 # Calculate the first and third quartiles (Q1 and Q3) for each ncore
 filtered_data <- plot_data
 filtered_data <- filtered_data %>%
@@ -157,20 +165,22 @@ plot2 <- ggplot(filtered_data, aes(x=ncore, y=tdp, fill=ncore)) +
 
 print(plot2)
 
-
 # pdf("Descriptive_statistics/TDP_Ncore.pdf", width = 14, height = 7)
 # grid.arrange(plot1, plot2, ncol = 2)
 # dev.off()
 png("Descriptive_statistics/TDP_Ncore.png", width = 14, height = 7, res = 300, unit = "in")
 grid.arrange(plot1, plot2, ncol = 2)
 dev.off()
-
-
+#----------------------------------------------------------------------------------
+# Litho VS tdp
+#----------------------------------------------------------------------------------
 # Lithography as tdp is less convincing; 
 # however, we see that recent lithography techniques 
-# tend to have stable base frequency
-
+# tend to have stable tdp
+#----------------------------------------------------------------------------------
+# ---------------------------------
 # Box plot for lithography and tdp
+# ---------------------------------
 # Convert litho to a factor
 plot_data$litho <- as.factor(plot_data$litho)
 # Create the base plot
@@ -185,6 +195,7 @@ p <- p + theme_bw() +
         axis.title.x = element_text(size = 12, face = "bold"),
         axis.title.y = element_text(size = 12, face = "bold"),
         legend.position = "none")
+
 # Save the plot
 # pdf("Descriptive_statistics/TDP_litho.pdf", width = 14, height = 7)
 # print(p)
@@ -193,7 +204,8 @@ png("Descriptive_statistics/TDP_litho.png", width = 14, height = 7, unit = "in",
 print(p)
 dev.off()
 #-----------------------------------------------------------------------
-#Plotting TDP and Lithography
+# Plotting TDP and Processor Base Frequency
+#-----------------------------------------------------------------------
 p <- ggplot(plot_data, aes(x = bfreq, y = tdp)) +
   geom_point(color = "firebrick", size = 1, alpha = 0.7) +
   geom_smooth(method = "lm") +
@@ -207,7 +219,10 @@ print(p)
 dev.off()
 
 #----------------------------------------------------------------------------
-# Different trends: temp vs tdp
+# Temp VS Tdp
+#----------------------------------------------------------------------------
+# Different trends:
+# -----------------
 p <- ggplot(plot_data, aes(x = temp, y = tdp)) +
 geom_point(color = "blue", size = 0.4, alpha = 0.7) +
 #geom_abline(intercept= -50, slope = 1.2, color = "red") +
@@ -232,12 +247,15 @@ png("Descriptive_statistics/TDP_temp.png", width=8, height=4, unit = "in", res =
 grid.arrange(plot_grob, ncol = 1)
 dev.off()
 
-#-------------------------------------------------------------------------
-#  tdp ~ temp and tdp ~ market : There are two different trends happening:
-# above the reference line is increasing trend, while below is decreasing trend. 
-# In fact, we have a feeling that these two trends come from different 
+#----------------------------------------------------------------------------
+# tdp VS temp AND tdp VS market
+#----------------------------------------------------------------------------
+# There are two different trends happening:
+# - Above the reference line is increasing trend, while below is decreasing trend. 
+# - In fact, we have a feeling that these two trends come from different 
 # market segments type = (Desktop + Server) --> Computers
 #                        (Mobile + Embedded)--> Devices
+#----------------------------------------------------------------------------
 View(data)
 market_plot <- ggplot(data, aes(x = tdp, fill = market)) +
   #geom_bar(position="dodge", stat="identity") +
@@ -263,8 +281,9 @@ data1$type <- ifelse(data1$market == 'Server' | data1$market == 'Desktop', "Comp
 View(data1)
 data1$type <- as.factor(data1$type)
 
-#---------------------------------------------------------------------------
-# Create the density plot of tdp for each type
+#----------------------------------------------------------------------------------
+# Create the DENSITY PLOT of TDP for EACH TYPE
+#----------------------------------------------------------------------------------
 p <- ggplot(data1, aes(x = tdp, fill = type)) + 
   geom_density(alpha = 0.6) +
   scale_fill_manual(values = c("Computers" = "deepskyblue", "Devices" = "firebrick3")) +
@@ -279,8 +298,9 @@ p <- ggplot(data1, aes(x = tdp, fill = type)) +
 #ggsave("Descriptive_statistics/type_tdp_density.pdf", plot = p, width = 10, height = 7)
 # Print the plot
 
-#-------------------------------------------------------------------------#
-# Create the plot separate each type of cpu
+#-------------------------------------------------------------------------
+# PLOT SEPERATE each type of cpu
+#-------------------------------------------------------------------------
 p1 <- ggplot(data1, aes(x = temp, y = tdp)) + 
   geom_point(aes(color = type), alpha = 0.6, size = 1) +
   scale_color_manual(values = c("Computers" = "deepskyblue", "Devices" = "firebrick3")) +
@@ -302,6 +322,3 @@ png("Descriptive_statistics/type.png", width = 15, height = 5, unit = "in", res 
 grid.arrange(p, p1, ncol = 2)
 dev.off()
 # ---------------------------------------------------------------------------
-
-
-

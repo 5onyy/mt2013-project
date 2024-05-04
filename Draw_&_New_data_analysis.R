@@ -1,3 +1,6 @@
+# ----------------------------------------------------------------------------------
+#                               INSTALLING PACKAGES                                #
+# ----------------------------------------------------------------------------------
 library(car)
 library(caret)
 library(dplyr)
@@ -25,7 +28,9 @@ pacman::p_load(
 )
 
 data <- import("Dataset/cpu_clean.csv") # rio::impor
-
+# ----------------------------------------------------------------------------------
+# SUMMARY OF DATA AND LITHO
+# ----------------------------------------------------------------------------------
 summary(data)
 unique(data$litho)
 names(data)
@@ -41,11 +46,14 @@ data <- data[data$litho != 250, ]
 xtabs(~litho,data=data)
 
 summary(data)
+
+# Remove the NA values
 data <- data[!is.na(data$tdp), ]
 data <- data[!is.na(data$litho), ]
 summary(data)
 unique(data$litho)
 
+# Occurrences of TDP >= 150 is rare --> may delete
 data <- data[data$tdp < 150, ]
 data <- data[!is.na(data$tdp), ]
 data <- data[!is.na(data$bfreq), ]
@@ -54,7 +62,7 @@ data <- data[!is.na(data$ncore), ]
 data <- data[!is.na(data$temp), ]
 summary(data)
 
-# Assuming 'data' is your dataframe
+# Store dataframe data into data2
 data2 <- data
 xtabs(~tdp,data=data)
 
